@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDisplayName</key>
+	<string>Dropbox Deeplink Finder Extension</string>
+	<key>CFBundleExecutable</key>
+	<string>DropboxOpenFinderSync</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.quoxient.dropbox-open.findersync</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>DropboxOpenFinderSync</string>
+	<key>CFBundlePackageType</key>
+	<string>XPC!</string>
+	<key>CFBundleShortVersionString</key>
+	<string>2.0.0</string>
+	<key>CFBundleSupportedPlatforms</key>
+	<array>
+		<string>MacOSX</string>
+	</array>
+	<key>CFBundleVersion</key>
+	<string>2</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>13.0</string>
+	<key>LSUIElement</key>
+	<true/>
+	<key>NSExtension</key>
+	<dict>
+		<key>NSExtensionAttributes</key>
+		<dict>
+			<key>NSExtensionPointName</key>
+			<string>com.apple.FinderSync</string>
+			<key>NSExtensionPointVersion</key>
+			<string>1.0</string>
+			<key>NSExtensionVersion</key>
+			<string>2.0.0</string>
+		</dict>
+		<key>NSExtensionContextClass</key>
+		<string>FIFinderSyncExtension</string>
+		<key>NSExtensionContextHostClass</key>
+		<string>FIFinderSyncExtensionHost</string>
+		<key>NSExtensionPointIdentifier</key>
+		<string>com.apple.FinderSync</string>
+		<key>NSExtensionPointName</key>
+		<string>com.apple.FinderSync</string>
+		<key>NSExtensionPrincipalClass</key>
+		<string>DropboxOpenFinderSync.FinderSync</string>
+		<key>Subsystems</key>
+		<array>
+			<string>FIFinderSyncService_Subsystem</string>
+		</array>
+		<key>_NSExtensionHostRequiresDedicatedQueue</key>
+		<true/>
+	</dict>
+	<key>NSPrincipalClass</key>
+	<string>NSApplication</string>
+	<key>XPCService</key>
+	<dict>
+		<key>JoinExistingSession</key>
+		<true/>
+		<key>RunLoopType</key>
+		<string>_NSApplicationMain</string>
+		<key>ServiceType</key>
+		<string>Application</string>
+		<key>_AdditionalSubServices</key>
+		<dict>
+			<key>apple-extension-service</key>
+			<true/>
+		</dict>
+		<key>_MultipleInstances</key>
+		<true/>
+	</dict>
+</dict>
+</plist>

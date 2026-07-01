@@ -70,6 +70,8 @@ public enum DropboxLinkError: LocalizedError, Equatable {
 
 public final class WorkspaceStore {
     public static let appSuiteName = "com.quoxient.dropbox-open"
+    public static let appGroupSuiteName = "group.com.quoxient.dropbox-open"
+    public static let workspacesDidChangeNotification = Notification.Name("com.quoxient.dropbox-open.workspacesChanged")
     public static let workspacesKey = "workspacesJSON"
     public static let defaultWorkspaceIDKey = "defaultWorkspaceID"
     public static let legacyTeamRootKey = "teamRootPath"
@@ -80,6 +82,27 @@ public final class WorkspaceStore {
 
     public init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+    }
+
+    public static func sharedDefaults() -> UserDefaults {
+        let standard = UserDefaults.standard
+        guard let group = UserDefaults(suiteName: appGroupSuiteName) else {
+            return standard
+        }
+
+        if group.string(forKey: workspacesKey) == nil,
+           let existing = standard.string(forKey: workspacesKey) {
+            group.set(existing, forKey: workspacesKey)
+        }
+        if group.string(forKey: defaultWorkspaceIDKey) == nil,
+           let existing = standard.string(forKey: defaultWorkspaceIDKey) {
+            group.set(existing, forKey: defaultWorkspaceIDKey)
+        }
+        if group.string(forKey: legacyTeamRootKey) == nil,
+           let existing = standard.string(forKey: legacyTeamRootKey) {
+            group.set(existing, forKey: legacyTeamRootKey)
+        }
+        return group
     }
 
     public var workspaces: [Workspace] {

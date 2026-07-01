@@ -1,5 +1,5 @@
 cask "dropbox-open" do
-  version "1.0.0"
+  version "2.0.0"
   sha256 :no_check
 
   url "https://github.com/zm2231/dropbox-open/releases/download/v#{version}/Dropbox%20Deeplink.zip"
@@ -8,14 +8,22 @@ cask "dropbox-open" do
   homepage "https://github.com/zm2231/dropbox-open"
 
   app "Dropbox Deeplink.app"
-  artifact "Copy Dropbox Deeplink.workflow",
-           target: "#{Dir.home}/Library/Services/Copy Dropbox Deeplink.workflow"
 
   postflight do
+    system_command "/bin/rm",
+                    args: ["-rf", "#{Dir.home}/Library/Services/Copy Dropbox Deeplink.workflow"],
+                    sudo: false
+    system_command "/System/Library/CoreServices/pbs",
+                    args: ["-flush"],
+                    sudo: false
     system_command "/usr/bin/open",
                     args: ["-g", "-j", "#{appdir}/Dropbox Deeplink.app"]
-    system_command "/System/Library/CoreServices/pbs",
-                    args: ["-flush"]
+    system_command "/usr/bin/pluginkit",
+                    args: ["-a", "#{appdir}/Dropbox Deeplink.app/Contents/PlugIns/DropboxOpenFinderSync.appex"],
+                    sudo: false
+    system_command "/usr/bin/pluginkit",
+                    args: ["-e", "use", "-i", "com.quoxient.dropbox-open.findersync"],
+                    sudo: false
   end
 
   zap trash: [
