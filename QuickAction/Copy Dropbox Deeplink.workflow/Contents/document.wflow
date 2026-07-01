@@ -73,39 +73,111 @@ if ! /usr/bin/python3 -c '' 2>/dev/null; then
   fail "There's no python3 on this Mac. Bold choice. Install Xcode Command Line Tools and try again."
 fi
 
-ROOT="$(defaults read com.quoxient.dropbox-open teamRootPath 2>/dev/null)"
-if [ -z "$ROOT" ]; then
-  alert "You never told me where your Team Dropbox Folder is. I'm not a mind reader, click the Dropbox Deeplink icon in your menu bar and set it."
-  exit 0
-fi
+WORKSPACES_JSON="$(defaults read com.quoxient.dropbox-open workspacesJSON 2>/dev/null || true)"
+DEFAULT_WORKSPACE_ID="$(defaults read com.quoxient.dropbox-open defaultWorkspaceID 2>/dev/null || true)"
+LEGACY_ROOT="$(defaults read com.quoxient.dropbox-open teamRootPath 2>/dev/null || true)"
 
-LINKS=()
-SKIPPED=0
-for f in "$@"; do
-  case "$f" in
-    "$ROOT"/*)
-      REL="${f#$ROOT/}"
-      ENC="$(/usr/bin/python3 -c 'import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1], safe=""))' "$REL")"
-      LINKS+=("dbxopen://$ENC")
-      ;;
-    *)
-      SKIPPED=$((SKIPPED+1))
-      ;;
-  esac
-done
+MESSAGE="$(WORKSPACES_JSON="$WORKSPACES_JSON" DEFAULT_WORKSPACE_ID="$DEFAULT_WORKSPACE_ID" LEGACY_ROOT="$LEGACY_ROOT" /usr/bin/python3 - "$@" &lt;&lt;'PY'
+import json
+import os
+import re
+import subprocess
+import sys
+import urllib.parse
 
-if [ ${#LINKS[@]} -eq 0 ]; then
-  alert "You're not in the Dropbox folder. You good? Nothing to link here."
-  exit 0
-fi
+def normalized_id(value):
+    slug = re.sub(r"[^a-z0-9]+", "-", value.strip().lower()).strip("-")
+    return slug or "workspace"
 
-if ! printf "%s\n" "${LINKS[@]}" | pbcopy; then
-  fail "Tried to copy that link and your clipboard just said no. Try again."
-fi
+def normalized_path(value):
+    return os.path.normpath(value)
 
-if [ "$SKIPPED" -gt 0 ]; then
-  alert "Copied ${#LINKS[@]} link(s). Left $SKIPPED behind, they weren't in the Dropbox folder either."
-fi
+def load_workspaces():
+    raw = os.environ.get("WORKSPACES_JSON", "")
+    workspaces = []
+    if raw:
+        try:
+            for item in json.loads(raw):
+                root = item.get("rootPath")
+                wid = item.get("id")
+                name = item.get("name") or wid
+                if root and wid:
+                    workspaces.append({
+                        "id": normalized_id(wid),
+                        "name": name,
+                        "rootPath": normalized_path(root),
+                    })
+        except Exception:
+            workspaces = []
+
+    if workspaces:
+        return workspaces
+
+    legacy_root = os.environ.get("LEGACY_ROOT", "")
+    if legacy_root:
+        root = normalized_path(legacy_root)
+        return [{
+            "id": normalized_id(os.path.basename(root)),
+            "name": os.path.basename(root) or "Workspace",
+            "rootPath": root,
+        }]
+    return []
+
+def match_workspace(path, workspaces):
+    matches = []
+    for workspace in workspaces:
+        root = workspace["rootPath"]
+        if path == root:
+            matches.append((len(root), workspace, ""))
+        elif path.startswith(root + os.sep):
+            matches.append((len(root), workspace, path[len(root) + 1:]))
+    if not matches:
+        return None
+    _, workspace, relative = sorted(matches, reverse=True, key=lambda item: item[0])[0]
+    return workspace, relative
+
+workspaces = load_workspaces()
+if not workspaces:
+    print("You never told me where your Dropbox workspace is. Click the Dropbox Deeplink icon in your menu bar and add one.")
+    sys.exit(10)
+
+links = []
+skipped = 0
+for selected in sys.argv[1:]:
+    path = normalized_path(selected)
+    match = match_workspace(path, workspaces)
+    if not match:
+        skipped += 1
+        continue
+    workspace, relative = match
+    encoded = urllib.parse.quote(relative, safe="/")
+    links.append(f"dbxopen://{workspace['id']}/{encoded}")
+
+if not links:
+    print("You're not in a configured Dropbox workspace. You good? Nothing to link here.")
+    sys.exit(11)
+
+subprocess.run(["pbcopy"], input="\n".join(links) + "\n", text=True, check=True)
+if skipped:
+    print(f"Copied {len(links)} link(s). Left {skipped} behind, they weren't in a configured workspace.")
+PY
+)"
+RC=$?
+
+case "$RC" in
+  0)
+    if [ -n "$MESSAGE" ]; then
+      alert "$MESSAGE"
+    fi
+    ;;
+  10|11)
+    alert "$MESSAGE"
+    exit 0
+    ;;
+  *)
+    fail "Tried to copy that link and your clipboard just said no. Try again."
+    ;;
+esac
 </string>
 					<key>CheckedForUserDefaultShell</key>
 					<true/>
