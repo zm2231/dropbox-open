@@ -1,0 +1,47 @@
+name: update-tap
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  update-cask:
+    runs-on: macos-15
+    steps:
+      - name: Resolve release asset
+        id: asset
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          URL="${{ fromJson(toJson(github.event.release.assets))[0].browser_download_url }}"
+          SHA=$(curl -sL "$URL" | shasum -a 256 | awk '{print $1}')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout tap
+        uses: actions/checkout@v4
+        with:
+          repository: zm2231/homebrew-tap
+          token: ${{ secrets.TAP_TOKEN }}
+          path: homebrew-tap
+
+      - name: Update Cask
+        run: |
+          CASK="homebrew-tap/Casks/dropbox-open.rb"
+          ruby -e "
+            content = File.read('$CASK')
+            content.sub!(/version \\\".*?\\\"/, 'version \"${{ steps.asset.outputs.version }}\"')
+            content.sub!(/sha256 .*/, 'sha256 \"${{ steps.asset.outputs.sha }}\"')
+            content.sub!(%r{url \\\".*?\\\"}, 'url \"${{ steps.asset.outputs.url }}\"')
+            File.write('$CASK', content)
+          "
+
+      - name: Commit and push
+        run: |
+          cd homebrew-tap
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Casks/dropbox-open.rb
+          git diff --cached --quiet && exit 0
+          git commit -m "chore: bump dropbox-open to ${{ steps.asset.outputs.version }}"
+          git push

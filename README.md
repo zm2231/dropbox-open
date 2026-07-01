@@ -1,5 +1,10 @@
 # dropbox-open
 
+[![test](https://github.com/zm2231/dropbox-open/actions/workflows/test.yml/badge.svg)](https://github.com/zm2231/dropbox-open/actions/workflows/test.yml)
+[![release](https://img.shields.io/github/v/release/zm2231/dropbox-open)](https://github.com/zm2231/dropbox-open/releases/latest)
+[![platform](https://img.shields.io/badge/platform-macOS%2013%2B-lightgrey)](#)
+[![swift](https://img.shields.io/badge/swift-5.9-orange)](Package.swift)
+
 Menu-bar macOS app for turning a Dropbox file into a one-click Finder reveal, shareable
 as a link in Slack, Notion, wherever.
 
