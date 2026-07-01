@@ -39,7 +39,7 @@ xcrun notarytool store-credentials dropbox-open-notary \
 `notarytool` will securely prompt for an app-specific password and validate the
 profile before saving it.
 
-## Install (once released)
+## Install
 
 ```
 brew tap zm2231/tap
@@ -58,7 +58,7 @@ and ask macOS to enable it again.
 
 1. Click the menu-bar icon, "Add Dropbox Workspace...", pick your local synced copy
    of a shared Dropbox folder. The app assigns a workspace id from the folder name
-   (for example `Quoxient` becomes `quoxient`).
+   (for example `Acme` becomes `acme`).
    Adding a subfolder of an already configured workspace keeps the existing parent
    workspace; files in that subfolder still work as normal relative paths.
 2. Click any `dbxopen://...` link (Slack, wiki, wherever). Finder reveals the file.
@@ -70,11 +70,8 @@ and ask macOS to enable it again.
 New links include the workspace id:
 
 ```
-dbxopen://quoxient/Reports/2026-05-09-research-pass2-generational-psychology.md
+dbxopen://acme/Reports/2026-05-09-quarterly-summary.md
 ```
-
-Older single-root links like `dbxopen://Reports%2Ffile.md` still resolve against the
-default workspace.
 
 ## Finder integration
 

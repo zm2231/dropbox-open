@@ -49,7 +49,7 @@ public enum DropboxLinkError: LocalizedError, Equatable {
     case unsupportedScheme
     case noWorkspaces
     case unknownWorkspace(String)
-    case ambiguousLegacyLink
+    case missingWorkspace
     case unsafeRelativePath(String)
 
     public var errorDescription: String? {
@@ -60,8 +60,8 @@ public enum DropboxLinkError: LocalizedError, Equatable {
             return "No Dropbox workspaces are configured yet."
         case .unknownWorkspace(let id):
             return "No Dropbox workspace is configured for '\(id)'."
-        case .ambiguousLegacyLink:
-            return "That legacy link does not name a workspace, and more than one workspace is configured."
+        case .missingWorkspace:
+            return "That link does not name a Dropbox workspace."
         case .unsafeRelativePath(let path):
             return "The link path is not safe to open: \(path)"
         }
@@ -74,7 +74,6 @@ public final class WorkspaceStore {
     public static let workspacesDidChangeNotification = Notification.Name("com.merchantry.dropbox-open.workspacesChanged")
     public static let workspacesKey = "workspacesJSON"
     public static let defaultWorkspaceIDKey = "defaultWorkspaceID"
-    public static let legacyTeamRootKey = "teamRootPath"
 
     private let defaults: UserDefaults
     private let mirrorDefaults: [UserDefaults]
@@ -120,17 +119,10 @@ public final class WorkspaceStore {
             if let defaultID = standard.string(forKey: defaultWorkspaceIDKey) {
                 group.set(defaultID, forKey: defaultWorkspaceIDKey)
             }
-            if let legacyPath = standard.string(forKey: legacyTeamRootKey) {
-                group.set(legacyPath, forKey: legacyTeamRootKey)
-            }
         }
         if group.string(forKey: defaultWorkspaceIDKey) == nil,
            let existing = standard.string(forKey: defaultWorkspaceIDKey) {
             group.set(existing, forKey: defaultWorkspaceIDKey)
-        }
-        if group.string(forKey: legacyTeamRootKey) == nil,
-           let existing = standard.string(forKey: legacyTeamRootKey) {
-            group.set(existing, forKey: legacyTeamRootKey)
         }
         group.synchronize()
     }
@@ -142,26 +134,16 @@ public final class WorkspaceStore {
                let decoded = try? decoder.decode([Workspace].self, from: data) {
                 let normalized = Self.normalizedWorkspaces(decoded)
                 if normalized != decoded {
-                    save(workspaces: normalized, defaultWorkspaceID: normalized.first?.id, preserveLegacyRoot: false)
+                    save(workspaces: normalized, defaultWorkspaceID: normalized.first?.id)
                 }
                 return normalized
             }
 
-            guard let legacyPath = defaults.string(forKey: Self.legacyTeamRootKey), !legacyPath.isEmpty else {
-                return []
-            }
-
-            let legacy = Workspace(
-                id: uniqueID(base: Workspace.normalizedID(URL(fileURLWithPath: legacyPath).lastPathComponent), excluding: []),
-                name: URL(fileURLWithPath: legacyPath).lastPathComponent,
-                rootPath: legacyPath
-            )
-            save(workspaces: [legacy], defaultWorkspaceID: legacy.id, preserveLegacyRoot: true)
-            return [legacy]
+            return []
         }
         set {
             let defaultID = newValue.first(where: { $0.id == defaultWorkspaceID })?.id ?? newValue.first?.id
-            save(workspaces: newValue, defaultWorkspaceID: defaultID, preserveLegacyRoot: false)
+            save(workspaces: newValue, defaultWorkspaceID: defaultID)
         }
     }
 
@@ -199,12 +181,12 @@ public final class WorkspaceStore {
                 $0.id == id
         }
         all.append(workspace)
-        save(workspaces: all, defaultWorkspaceID: defaultWorkspaceID ?? workspace.id, preserveLegacyRoot: false)
+        save(workspaces: all, defaultWorkspaceID: defaultWorkspaceID ?? workspace.id)
         return workspace
     }
 
     public func clearWorkspaces() {
-        save(workspaces: [], defaultWorkspaceID: nil, preserveLegacyRoot: false)
+        save(workspaces: [], defaultWorkspaceID: nil)
     }
 
     public func link(for fileURL: URL) -> String? {
@@ -226,16 +208,10 @@ public final class WorkspaceStore {
                 let relative = Self.decodePath(String(url.path.dropFirst()))
                 return try resolved(workspace: workspace, relativePath: relative)
             }
-            if !url.path.isEmpty {
-                throw DropboxLinkError.unknownWorkspace(host)
-            }
+            throw DropboxLinkError.unknownWorkspace(host)
         }
 
-        let legacy = Self.decodePath((url.host ?? "") + url.path)
-        guard let workspace = defaultWorkspace ?? (all.count == 1 ? all[0] : nil) else {
-            throw DropboxLinkError.ambiguousLegacyLink
-        }
-        return try resolved(workspace: workspace, relativePath: legacy)
+        throw DropboxLinkError.missingWorkspace
     }
 
     public func matchWorkspace(for fileURL: URL) -> ResolvedDropboxLink? {
@@ -275,18 +251,16 @@ public final class WorkspaceStore {
         }
     }
 
-    private func save(workspaces: [Workspace], defaultWorkspaceID: String?, preserveLegacyRoot: Bool) {
+    private func save(workspaces: [Workspace], defaultWorkspaceID: String?) {
         save(
             workspaces: workspaces,
             defaultWorkspaceID: defaultWorkspaceID,
-            preserveLegacyRoot: preserveLegacyRoot,
             to: defaults
         )
         for mirror in mirrorDefaults {
             save(
                 workspaces: workspaces,
                 defaultWorkspaceID: defaultWorkspaceID,
-                preserveLegacyRoot: preserveLegacyRoot,
                 to: mirror
             )
         }
@@ -295,7 +269,6 @@ public final class WorkspaceStore {
     private func save(
         workspaces: [Workspace],
         defaultWorkspaceID: String?,
-        preserveLegacyRoot: Bool,
         to defaults: UserDefaults
     ) {
         if let data = try? encoder.encode(workspaces),
@@ -303,15 +276,6 @@ public final class WorkspaceStore {
             defaults.set(json, forKey: Self.workspacesKey)
         }
         defaults.set(defaultWorkspaceID, forKey: Self.defaultWorkspaceIDKey)
-        if preserveLegacyRoot {
-            defaults.synchronize()
-            return
-        }
-        if let defaultWorkspace = workspaces.first(where: { $0.id == defaultWorkspaceID }) ?? workspaces.first {
-            defaults.set(defaultWorkspace.rootPath, forKey: Self.legacyTeamRootKey)
-        } else {
-            defaults.removeObject(forKey: Self.legacyTeamRootKey)
-        }
         defaults.synchronize()
     }
 

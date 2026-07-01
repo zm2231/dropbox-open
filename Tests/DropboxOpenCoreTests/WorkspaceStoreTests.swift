@@ -52,18 +52,6 @@ struct WorkspaceStoreTests {
         #expect(resolved.fileURL.path == "/Dropbox/Team/Reports/file name.md")
     }
 
-    @Test("migrates legacy root and resolves old links")
-    func migratesLegacyRoot() throws {
-        let defaults = try isolatedDefaults()
-        defaults.set("/Dropbox/Quoxient", forKey: WorkspaceStore.legacyTeamRootKey)
-        let store = WorkspaceStore(defaults: defaults)
-
-        let resolved = try store.resolve(#require(URL(string: "dbxopen://Reports%2Ffile.md")))
-
-        #expect(store.workspaces.map(\.id) == ["quoxient"])
-        #expect(resolved.fileURL.path == "/Dropbox/Quoxient/Reports/file.md")
-    }
-
     @Test("repairs stale app group defaults from richer standard defaults")
     func repairsStaleSharedDefaults() throws {
         let standard = try isolatedDefaults()
@@ -71,47 +59,45 @@ struct WorkspaceStoreTests {
         let standardStore = WorkspaceStore(defaults: standard)
         let groupStore = WorkspaceStore(defaults: group)
 
-        _ = standardStore.addWorkspace(rootURL: URL(fileURLWithPath: "/Dropbox/Quoxient"), name: "Quoxient")
+        _ = standardStore.addWorkspace(rootURL: URL(fileURLWithPath: "/Dropbox/Acme"), name: "Acme")
         _ = standardStore.addWorkspace(rootURL: URL(fileURLWithPath: "/Dropbox/Personal"), name: "Personal")
-        _ = groupStore.addWorkspace(rootURL: URL(fileURLWithPath: "/Dropbox/Quoxient"), name: "Quoxient")
+        _ = groupStore.addWorkspace(rootURL: URL(fileURLWithPath: "/Dropbox/Acme"), name: "Acme")
 
         WorkspaceStore.migrateSharedDefaults(from: standard, to: group)
 
-        #expect(groupStore.workspaces.map(\.id) == ["quoxient", "personal"])
+        #expect(groupStore.workspaces.map(\.id) == ["acme", "personal"])
     }
 
-    @Test("mirrors saves and clears to legacy app defaults")
+    @Test("mirrors saves and clears to app defaults")
     func mirrorsSavesAndClears() throws {
         let group = try isolatedDefaults()
         let appDefaults = try isolatedDefaults()
         let groupStore = WorkspaceStore(defaults: group, mirrorDefaults: [appDefaults])
         let appStore = WorkspaceStore(defaults: appDefaults)
 
-        _ = groupStore.addWorkspace(rootURL: URL(fileURLWithPath: "/Dropbox/Quoxient"), name: "Quoxient")
+        _ = groupStore.addWorkspace(rootURL: URL(fileURLWithPath: "/Dropbox/Acme"), name: "Acme")
         _ = groupStore.addWorkspace(rootURL: URL(fileURLWithPath: "/Dropbox/Personal"), name: "Personal")
 
-        #expect(appStore.workspaces.map(\.id) == ["quoxient", "personal"])
+        #expect(appStore.workspaces.map(\.id) == ["acme", "personal"])
 
         groupStore.clearWorkspaces()
 
         #expect(groupStore.workspaces.isEmpty)
         #expect(appStore.workspaces.isEmpty)
-        #expect(group.string(forKey: WorkspaceStore.legacyTeamRootKey) == nil)
-        #expect(appDefaults.string(forKey: WorkspaceStore.legacyTeamRootKey) == nil)
     }
 
     @Test("normalizes previously saved nested workspaces")
     func normalizesSavedNestedWorkspaces() throws {
         let defaults = try isolatedDefaults()
         let encoded = try JSONEncoder().encode([
-            Workspace(id: "quoxient", name: "Quoxient", rootPath: "/Dropbox/Quoxient"),
-            Workspace(id: "reports", name: "Reports", rootPath: "/Dropbox/Quoxient/Reports"),
+            Workspace(id: "acme", name: "Acme", rootPath: "/Dropbox/Acme"),
+            Workspace(id: "reports", name: "Reports", rootPath: "/Dropbox/Acme/Reports"),
         ])
         defaults.set(String(data: encoded, encoding: .utf8), forKey: WorkspaceStore.workspacesKey)
         let store = WorkspaceStore(defaults: defaults)
 
-        #expect(store.workspaces.map(\.id) == ["quoxient"])
-        #expect(store.link(for: URL(fileURLWithPath: "/Dropbox/Quoxient/Reports/file.md")) == "dbxopen://quoxient/Reports/file.md")
+        #expect(store.workspaces.map(\.id) == ["acme"])
+        #expect(store.link(for: URL(fileURLWithPath: "/Dropbox/Acme/Reports/file.md")) == "dbxopen://acme/Reports/file.md")
     }
 
     @Test("rejects unknown workspace-qualified links")
@@ -122,6 +108,20 @@ struct WorkspaceStoreTests {
 
         #expect(throws: DropboxLinkError.unknownWorkspace("other")) {
             _ = try store.resolve(#require(URL(string: "dbxopen://other/file.md")))
+        }
+    }
+
+    @Test("rejects links that do not name a workspace")
+    func rejectsWorkspaceLessLinks() throws {
+        let defaults = try isolatedDefaults()
+        let store = WorkspaceStore(defaults: defaults)
+        _ = store.addWorkspace(rootURL: URL(fileURLWithPath: "/Dropbox/Team"), name: "Team")
+
+        #expect(throws: DropboxLinkError.unknownWorkspace("Reports/file.md")) {
+            _ = try store.resolve(#require(URL(string: "dbxopen://Reports%2Ffile.md")))
+        }
+        #expect(throws: DropboxLinkError.missingWorkspace) {
+            _ = try store.resolve(#require(URL(string: "dbxopen:///Reports/file.md")))
         }
     }
 
