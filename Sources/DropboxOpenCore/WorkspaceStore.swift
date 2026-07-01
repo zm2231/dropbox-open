@@ -176,10 +176,14 @@ public final class WorkspaceStore {
         let all = workspaces
         guard !all.isEmpty else { throw DropboxLinkError.noWorkspaces }
 
-        if let host = url.host?.removingPercentEncoding,
-           let workspace = all.first(where: { $0.id == host }) {
-            let relative = Self.decodePath(String(url.path.dropFirst()))
-            return try resolved(workspace: workspace, relativePath: relative)
+        if let rawHost = url.host, let host = rawHost.removingPercentEncoding {
+            if let workspace = all.first(where: { $0.id == host }) {
+                let relative = Self.decodePath(String(url.path.dropFirst()))
+                return try resolved(workspace: workspace, relativePath: relative)
+            }
+            if !url.path.isEmpty {
+                throw DropboxLinkError.unknownWorkspace(host)
+            }
         }
 
         let legacy = Self.decodePath((url.host ?? "") + url.path)

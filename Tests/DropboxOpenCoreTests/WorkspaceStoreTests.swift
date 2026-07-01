@@ -39,6 +39,17 @@ struct WorkspaceStoreTests {
         #expect(resolved.fileURL.path == "/Dropbox/Quoxient/Reports/file.md")
     }
 
+    @Test("rejects unknown workspace-qualified links")
+    func rejectsUnknownWorkspaceQualifiedLinks() throws {
+        let defaults = try isolatedDefaults()
+        let store = WorkspaceStore(defaults: defaults)
+        _ = store.addWorkspace(rootURL: URL(fileURLWithPath: "/Dropbox/Team"), name: "Team")
+
+        #expect(throws: DropboxLinkError.unknownWorkspace("other")) {
+            _ = try store.resolve(#require(URL(string: "dbxopen://other/file.md")))
+        }
+    }
+
     @Test("rejects unsafe relative paths")
     func rejectsUnsafePaths() throws {
         let defaults = try isolatedDefaults()
