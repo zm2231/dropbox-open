@@ -11,6 +11,7 @@ struct BoxIconTests {
         #expect(icon.isTemplate)
         #expect(icon.size == NSSize(width: 18, height: 18))
         #expect(icon.accessibilityDescription == "Dropbox Deeplink")
+        #expect(!icon.representations.isEmpty)
     }
 
     @Test("creates explicitly tinted icon for Finder menus")
@@ -19,5 +20,6 @@ struct BoxIconTests {
 
         #expect(!icon.isTemplate)
         #expect(icon.size == NSSize(width: 18, height: 18))
+        #expect(!icon.representations.isEmpty)
     }
 }

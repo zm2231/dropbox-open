@@ -1,6 +1,10 @@
 import AppKit
 
 public enum BoxIcon {
+    private static let symbolName = "shippingbox.fill"
+    private static let fallbackSymbolName = "shippingbox"
+    private static let size = NSSize(width: 18, height: 18)
+
     public static func make(accessibilityDescription: String?) -> NSImage {
         make(accessibilityDescription: accessibilityDescription, tint: nil)
     }
@@ -10,32 +14,41 @@ public enum BoxIcon {
     }
 
     public static func make(accessibilityDescription: String?, tint: NSColor?) -> NSImage {
-        let size = NSSize(width: 18, height: 18)
+        guard let symbol = symbol(accessibilityDescription: accessibilityDescription) else {
+            return NSImage()
+        }
+
+        guard let tint else {
+            symbol.isTemplate = true
+            return symbol
+        }
+
         let image = NSImage(size: size, flipped: false) { rect in
-            (tint ?? .black).setFill()
-
-            let body = NSBezierPath(roundedRect: NSRect(x: 3.0, y: 3.0, width: 12.0, height: 10.0), xRadius: 1.8, yRadius: 1.8)
-            body.fill()
-
-            let lid = NSBezierPath()
-            lid.move(to: NSPoint(x: 3.8, y: 12.0))
-            lid.line(to: NSPoint(x: 7.0, y: 15.2))
-            lid.line(to: NSPoint(x: 10.8, y: 15.2))
-            lid.line(to: NSPoint(x: 14.2, y: 12.0))
-            lid.line(to: NSPoint(x: 11.6, y: 9.4))
-            lid.line(to: NSPoint(x: 9.0, y: 12.0))
-            lid.line(to: NSPoint(x: 6.4, y: 9.4))
-            lid.close()
-            lid.fill()
+            tint.setFill()
+            rect.fill()
+            symbol.draw(in: rect, from: .zero, operation: .destinationIn, fraction: 1)
             return true
         }
         image.accessibilityDescription = accessibilityDescription
-        image.isTemplate = tint == nil
+        image.isTemplate = false
         return image
     }
 
+    private static func symbol(accessibilityDescription: String?) -> NSImage? {
+        let configuration = NSImage.SymbolConfiguration(pointSize: 16, weight: .regular)
+        let image = NSImage(systemSymbolName: symbolName, accessibilityDescription: accessibilityDescription)
+            ?? NSImage(systemSymbolName: fallbackSymbolName, accessibilityDescription: accessibilityDescription)
+        let configured = image?.withSymbolConfiguration(configuration) ?? image
+        configured?.size = size
+        configured?.accessibilityDescription = accessibilityDescription
+        return configured
+    }
+
     private static func isDarkAppearance() -> Bool {
-        if NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua {
+        if NSAppearance.currentDrawing().bestMatch(from: [.darkAqua, .aqua]) == .darkAqua {
+            return true
+        }
+        if NSApp?.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua {
             return true
         }
         return UserDefaults.standard.string(forKey: "AppleInterfaceStyle") == "Dark"
