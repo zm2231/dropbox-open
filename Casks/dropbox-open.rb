@@ -1,6 +1,6 @@
 cask "dropbox-open" do
-  version "1.0"
-  sha256 "7be16b8f19b620ce59cf82fc3c68521ef5154066932a0419012e4efe18e784ff"
+  version "1.1"
+  sha256 "2bfa51ff0ac8876b02fc46c20c9b6883826d2764f42c7c71fe0700335abcf9dd"
 
   url "https://github.com/zm2231/dropbox-open/releases/download/v#{version}/Dropbox.Deeplink.zip"
   name "Dropbox Deeplink"
