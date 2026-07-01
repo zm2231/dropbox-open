@@ -1,8 +1,8 @@
 cask "dropbox-open" do
   version "1.0"
-  sha256 :no_check
+  sha256 "7be16b8f19b620ce59cf82fc3c68521ef5154066932a0419012e4efe18e784ff"
 
-  url "https://github.com/zm2231/dropbox-open/releases/download/v#{version}/Dropbox%20Deeplink.zip"
+  url "https://github.com/zm2231/dropbox-open/releases/download/v#{version}/Dropbox.Deeplink.zip"
   name "Dropbox Deeplink"
   desc "Menu-bar app that resolves dbxopen:// links to a local Finder reveal"
   homepage "https://github.com/zm2231/dropbox-open"
