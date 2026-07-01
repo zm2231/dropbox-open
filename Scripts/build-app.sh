@@ -42,6 +42,7 @@ xcrun swiftc \
   -sdk "$MACOS_SDK" \
   -framework Cocoa \
   -framework FinderSync \
+  "$ROOT/Sources/DropboxOpenCore/IconNames.swift" \
   "$ROOT/Sources/DropboxOpenCore/WorkspaceStore.swift" \
   "$ROOT/Sources/DropboxOpenFinderSync/FinderSync.swift" \
   "$ROOT/Sources/DropboxOpenFinderSync/main.swift" \

@@ -29,7 +29,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func buildStatusItem() {
         if statusItem == nil {
             statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-            statusItem?.button?.image = NSImage(systemSymbolName: "shippingbox", accessibilityDescription: "Dropbox Deeplink")
+            statusItem?.button?.image = Self.boxIcon(accessibilityDescription: "Dropbox Deeplink")
         }
 
         let menu = NSMenu()
@@ -147,5 +147,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         alert.messageText = title
         alert.informativeText = message
         alert.runModal()
+    }
+
+    private static func boxIcon(accessibilityDescription: String?) -> NSImage {
+        let image = NSImage(systemSymbolName: IconNames.box, accessibilityDescription: accessibilityDescription)
+            ?? NSImage(systemSymbolName: "shippingbox", accessibilityDescription: accessibilityDescription)
+            ?? NSImage()
+        image.isTemplate = true
+        return image
     }
 }
