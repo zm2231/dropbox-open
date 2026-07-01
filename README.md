@@ -46,8 +46,10 @@ brew tap zm2231/tap
 brew install --cask dropbox-open
 ```
 
-Installs the app into `/Applications`. The Finder Sync extension is embedded in the
-app bundle; macOS may ask you to enable it in System Settings the first time.
+Installs the app into `/Applications` and enables the Finder Sync extension
+automatically (the Cask runs `pluginkit -e use` as part of install). macOS does not
+prompt for this on its own; if the extension is ever disabled later, re-enable it in
+System Settings > Login Items & Extensions > Finder Extensions.
 
 ## Use
 
@@ -76,7 +78,7 @@ default workspace.
 Dropbox Deeplink ships a `com.apple.FinderSync` extension rather than an Automator
 Service. That is what gives it folder-scoped visibility, custom menu icons, and a
 Finder toolbar menu. The menu-bar app and Finder extension share workspace config
-through the app group `group.com.quoxient.dropbox-open`.
+through the app group `group.com.merchantry.dropbox-open`.
 
 If Finder does not show the menu item after install, enable "Dropbox Deeplink Finder
 Extension" in System Settings > Login Items & Extensions > Finder Extensions. The

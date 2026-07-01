@@ -4,7 +4,7 @@ import os
 
 @objc(FinderSync)
 final class FinderSync: FIFinderSync {
-    private let logger = Logger(subsystem: "com.quoxient.dropbox-open", category: "FinderSync")
+    private let logger = Logger(subsystem: "com.merchantry.dropbox-open", category: "FinderSync")
     private let store = WorkspaceStore(defaults: WorkspaceStore.sharedDefaults())
 
     override init() {
