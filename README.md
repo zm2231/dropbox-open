@@ -50,6 +50,9 @@ Installs the app into `/Applications` and enables the Finder Sync extension
 automatically (the Cask runs `pluginkit -e use` as part of install). macOS does not
 prompt for this on its own; if the extension is ever disabled later, re-enable it in
 System Settings > Login Items & Extensions > Finder Extensions.
+The menu-bar icon shows a warning state when the app detects that the Finder
+extension is disabled or not registered; use the first menu item to run the doctor
+and ask macOS to enable it again.
 
 ## Use
 

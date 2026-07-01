@@ -13,6 +13,12 @@ public enum BoxIcon {
         make(accessibilityDescription: accessibilityDescription, tint: isDarkAppearance() ? .white : .black)
     }
 
+    public static func makeAlertIcon(accessibilityDescription: String?) -> NSImage {
+        let image = make(accessibilityDescription: accessibilityDescription, tint: isDarkAppearance() ? .white : .black)
+        image.size = NSSize(width: 64, height: 64)
+        return image
+    }
+
     public static func make(accessibilityDescription: String?, tint: NSColor?) -> NSImage {
         guard let symbol = symbol(accessibilityDescription: accessibilityDescription) else {
             return NSImage()

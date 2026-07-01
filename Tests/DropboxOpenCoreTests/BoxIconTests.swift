@@ -22,4 +22,14 @@ struct BoxIconTests {
         #expect(icon.size == NSSize(width: 18, height: 18))
         #expect(!icon.representations.isEmpty)
     }
+
+    @Test("creates a larger app alert icon")
+    func createsAlertIcon() {
+        let icon = BoxIcon.makeAlertIcon(accessibilityDescription: "Dropbox Deeplink")
+
+        #expect(!icon.isTemplate)
+        #expect(icon.size == NSSize(width: 64, height: 64))
+        #expect(icon.accessibilityDescription == "Dropbox Deeplink")
+        #expect(!icon.representations.isEmpty)
+    }
 }
