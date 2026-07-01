@@ -22,28 +22,6 @@ Its really annoying that Dropbox doesn't make this easier. I saw the open in Fin
   menus only inside configured workspace folders, so the "Copy Dropbox Deeplink"
   item is scoped to the right locations and can use its own menu icon/grouping.
 
-## Build
-
-```
-./Scripts/build-app.sh
-```
-
-Produces a signed, notarized `dist/Dropbox Deeplink.app` and `dist/Dropbox Deeplink.zip`.
-The default notarization profile is `dropbox-open-notary`; override it with
-`NOTARY_PROFILE=...`. For local packaging checks that should skip Apple's notary
-service, run `NOTARIZE=0 ./Scripts/build-app.sh`.
-
-Before the first release build on a new machine, create the Keychain profile:
-
-```
-xcrun notarytool store-credentials dropbox-open-notary \
-  --apple-id you@example.com \
-  --team-id Q5Y75DVV4M
-```
-
-`notarytool` will securely prompt for an app-specific password and validate the
-profile before saving it.
-
 ## Install
 
 ```
@@ -100,3 +78,25 @@ the wrong bundle.
 - Multiple Dropbox accounts on one machine are supported by adding one workspace root
   per synced shared folder. Links require teammates to use the same workspace id.
 - Assumes everyone's synced copy of each workspace has the same relative structure.
+
+## Build (for contributors)
+
+```
+./Scripts/build-app.sh
+```
+
+Produces a signed, notarized `dist/Dropbox Deeplink.app` and `dist/Dropbox Deeplink.zip`.
+The default notarization profile is `dropbox-open-notary`; override it with
+`NOTARY_PROFILE=...`. For local packaging checks that should skip Apple's notary
+service, run `NOTARIZE=0 ./Scripts/build-app.sh`.
+
+Before the first release build on a new machine, create the Keychain profile:
+
+```
+xcrun notarytool store-credentials dropbox-open-notary \
+  --apple-id you@example.com \
+  --team-id Q5Y75DVV4M
+```
+
+`notarytool` will securely prompt for an app-specific password and validate the
+profile before saving it.
