@@ -1,12 +1,15 @@
 import Cocoa
 import FinderSync
+import os
 
 @objc(FinderSync)
 final class FinderSync: FIFinderSync {
+    private let logger = Logger(subsystem: "com.quoxient.dropbox-open", category: "FinderSync")
     private let store = WorkspaceStore(defaults: WorkspaceStore.sharedDefaults())
 
     override init() {
         super.init()
+        logger.notice("Finder Sync extension initialized")
         updateDirectoryURLs()
         DistributedNotificationCenter.default().addObserver(
             self,
@@ -35,6 +38,7 @@ final class FinderSync: FIFinderSync {
     override func menu(for menuKind: FIMenuKind) -> NSMenu? {
         let urls = candidateURLs(for: menuKind)
         let supported = urls.filter { store.matchWorkspace(for: $0) != nil }
+        logger.notice("Finder menu requested kind=\(String(describing: menuKind), privacy: .public) candidates=\(urls.map(\.path).joined(separator: " | "), privacy: .public) supported=\(supported.map(\.path).joined(separator: " | "), privacy: .public)")
         guard !supported.isEmpty else { return nil }
 
         let menu = NSMenu(title: "Dropbox Deeplink")
@@ -53,6 +57,7 @@ final class FinderSync: FIFinderSync {
     @objc private func copyDropboxLinks(_ sender: NSMenuItem) {
         let urls = (sender.representedObject as? [URL]) ?? candidateURLs(for: .contextualMenuForItems)
         let links = urls.compactMap { store.link(for: $0) }
+        logger.notice("Copy requested urls=\(urls.map(\.path).joined(separator: " | "), privacy: .public) links=\(links.count, privacy: .public)")
         guard !links.isEmpty else { return }
 
         let pasteboard = NSPasteboard.general
@@ -65,7 +70,9 @@ final class FinderSync: FIFinderSync {
     }
 
     private func updateDirectoryURLs() {
-        FIFinderSyncController.default().directoryURLs = Set(store.workspaces.map(\.rootURL))
+        let urls = Set(store.workspaces.map(\.rootURL))
+        FIFinderSyncController.default().directoryURLs = urls
+        logger.notice("Directory URLs updated: \(urls.map(\.path).sorted().joined(separator: " | "), privacy: .public)")
     }
 
     private func candidateURLs(for menuKind: FIMenuKind) -> [URL] {

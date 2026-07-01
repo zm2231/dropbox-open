@@ -24,6 +24,9 @@ cask "dropbox-open" do
     system_command "/usr/bin/pluginkit",
                     args: ["-e", "use", "-i", "com.quoxient.dropbox-open.findersync"],
                     sudo: false
+    system_command "/usr/bin/killall",
+                    args: ["Finder"],
+                    sudo: false
   end
 
   zap trash: [

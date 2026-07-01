@@ -29,48 +29,13 @@
 	<key>NSExtension</key>
 	<dict>
 		<key>NSExtensionAttributes</key>
-		<dict>
-			<key>NSExtensionPointName</key>
-			<string>com.apple.FinderSync</string>
-			<key>NSExtensionPointVersion</key>
-			<string>1.0</string>
-			<key>NSExtensionVersion</key>
-			<string>2.0.0</string>
-		</dict>
-		<key>NSExtensionContextClass</key>
-		<string>FIFinderSyncExtension</string>
-		<key>NSExtensionContextHostClass</key>
-		<string>FIFinderSyncExtensionHost</string>
+		<dict/>
 		<key>NSExtensionPointIdentifier</key>
 		<string>com.apple.FinderSync</string>
-		<key>NSExtensionPointName</key>
-		<string>com.apple.FinderSync</string>
 		<key>NSExtensionPrincipalClass</key>
-		<string>DropboxOpenFinderSync.FinderSync</string>
-		<key>Subsystems</key>
-		<array>
-			<string>FIFinderSyncService_Subsystem</string>
-		</array>
-		<key>_NSExtensionHostRequiresDedicatedQueue</key>
-		<true/>
+		<string>FinderSync</string>
 	</dict>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
-	<key>XPCService</key>
-	<dict>
-		<key>JoinExistingSession</key>
-		<true/>
-		<key>RunLoopType</key>
-		<string>_NSApplicationMain</string>
-		<key>ServiceType</key>
-		<string>Application</string>
-		<key>_AdditionalSubServices</key>
-		<dict>
-			<key>apple-extension-service</key>
-			<true/>
-		</dict>
-		<key>_MultipleInstances</key>
-		<true/>
-	</dict>
 </dict>
 </plist>

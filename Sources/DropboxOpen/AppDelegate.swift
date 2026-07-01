@@ -1,5 +1,6 @@
 import Cocoa
 import DropboxOpenCore
+import ServiceManagement
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
@@ -12,7 +13,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             forEventClass: AEEventClass(kInternetEventClass),
             andEventID: AEEventID(kAEGetURL)
         )
+        registerLaunchAtLogin()
         buildStatusItem()
+    }
+
+    private func registerLaunchAtLogin() {
+        do {
+            guard SMAppService.mainApp.status != .enabled else { return }
+            try SMAppService.mainApp.register()
+        } catch {
+            NSLog("Dropbox Deeplink could not register launch at login: \(error.localizedDescription)")
+        }
     }
 
     private func buildStatusItem() {

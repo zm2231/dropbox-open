@@ -77,22 +77,52 @@ public final class WorkspaceStore {
     public static let legacyTeamRootKey = "teamRootPath"
 
     private let defaults: UserDefaults
+    private let mirrorDefaults: [UserDefaults]
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
 
-    public init(defaults: UserDefaults = .standard) {
+    public init(defaults: UserDefaults = .standard, mirrorDefaults: [UserDefaults] = []) {
         self.defaults = defaults
+        self.mirrorDefaults = mirrorDefaults
     }
 
     public static func sharedDefaults() -> UserDefaults {
-        let standard = UserDefaults.standard
+        let appDefaults = UserDefaults(suiteName: appSuiteName) ?? .standard
         guard let group = UserDefaults(suiteName: appGroupSuiteName) else {
-            return standard
+            return appDefaults
         }
+
+        migrateSharedDefaults(from: appDefaults, to: group)
+        migrateSharedDefaults(from: .standard, to: group)
+        migrateSharedDefaults(from: group, to: appDefaults)
+        return group
+    }
+
+    public static func sharedStore() -> WorkspaceStore {
+        let appDefaults = UserDefaults(suiteName: appSuiteName) ?? .standard
+        return WorkspaceStore(defaults: sharedDefaults(), mirrorDefaults: [appDefaults])
+    }
+
+    public static func migrateSharedDefaults(from standard: UserDefaults, to group: UserDefaults) {
+        standard.synchronize()
+        group.synchronize()
+
+        normalizeStoredWorkspaces(in: standard)
+        normalizeStoredWorkspaces(in: group)
 
         if group.string(forKey: workspacesKey) == nil,
            let existing = standard.string(forKey: workspacesKey) {
-            group.set(existing, forKey: workspacesKey)
+            group.set(normalizedWorkspaceJSON(from: existing) ?? existing, forKey: workspacesKey)
+        }
+        if let existing = standard.string(forKey: workspacesKey),
+           workspaceCount(in: existing) > workspaceCount(in: group.string(forKey: workspacesKey)) {
+            group.set(normalizedWorkspaceJSON(from: existing) ?? existing, forKey: workspacesKey)
+            if let defaultID = standard.string(forKey: defaultWorkspaceIDKey) {
+                group.set(defaultID, forKey: defaultWorkspaceIDKey)
+            }
+            if let legacyPath = standard.string(forKey: legacyTeamRootKey) {
+                group.set(legacyPath, forKey: legacyTeamRootKey)
+            }
         }
         if group.string(forKey: defaultWorkspaceIDKey) == nil,
            let existing = standard.string(forKey: defaultWorkspaceIDKey) {
@@ -102,14 +132,19 @@ public final class WorkspaceStore {
            let existing = standard.string(forKey: legacyTeamRootKey) {
             group.set(existing, forKey: legacyTeamRootKey)
         }
-        return group
+        group.synchronize()
     }
 
     public var workspaces: [Workspace] {
         get {
+            defaults.synchronize()
             if let data = defaults.string(forKey: Self.workspacesKey)?.data(using: .utf8),
                let decoded = try? decoder.decode([Workspace].self, from: data) {
-                return decoded
+                let normalized = Self.normalizedWorkspaces(decoded)
+                if normalized != decoded {
+                    save(workspaces: normalized, defaultWorkspaceID: normalized.first?.id, preserveLegacyRoot: false)
+                }
+                return normalized
             }
 
             guard let legacyPath = defaults.string(forKey: Self.legacyTeamRootKey), !legacyPath.isEmpty else {
@@ -145,6 +180,12 @@ public final class WorkspaceStore {
     public func addWorkspace(rootURL: URL, name explicitName: String? = nil) -> Workspace {
         var all = workspaces
         let rootPath = Workspace.normalizedPath(rootURL.path)
+        if let existingParent = all
+            .sorted(by: { $0.rootPath.count > $1.rootPath.count })
+            .first(where: { rootPath == $0.rootPath || rootPath.hasPrefix($0.rootPath + "/") }) {
+            return existingParent
+        }
+
         let name = explicitName?.trimmingCharacters(in: .whitespacesAndNewlines).nonEmpty
             ?? rootURL.lastPathComponent.nonEmpty
             ?? "Workspace"
@@ -152,7 +193,11 @@ public final class WorkspaceStore {
         let id = uniqueID(base: Workspace.normalizedID(name), excluding: existingIDs)
         let workspace = Workspace(id: id, name: name, rootPath: rootPath)
 
-        all.removeAll { $0.rootPath == rootPath || $0.id == id }
+        all.removeAll {
+            $0.rootPath == rootPath ||
+                $0.rootPath.hasPrefix(rootPath + "/") ||
+                $0.id == id
+        }
         all.append(workspace)
         save(workspaces: all, defaultWorkspaceID: defaultWorkspaceID ?? workspace.id, preserveLegacyRoot: false)
         return workspace
@@ -231,13 +276,35 @@ public final class WorkspaceStore {
     }
 
     private func save(workspaces: [Workspace], defaultWorkspaceID: String?, preserveLegacyRoot: Bool) {
+        save(
+            workspaces: workspaces,
+            defaultWorkspaceID: defaultWorkspaceID,
+            preserveLegacyRoot: preserveLegacyRoot,
+            to: defaults
+        )
+        for mirror in mirrorDefaults {
+            save(
+                workspaces: workspaces,
+                defaultWorkspaceID: defaultWorkspaceID,
+                preserveLegacyRoot: preserveLegacyRoot,
+                to: mirror
+            )
+        }
+    }
+
+    private func save(
+        workspaces: [Workspace],
+        defaultWorkspaceID: String?,
+        preserveLegacyRoot: Bool,
+        to defaults: UserDefaults
+    ) {
         if let data = try? encoder.encode(workspaces),
            let json = String(data: data, encoding: .utf8) {
             defaults.set(json, forKey: Self.workspacesKey)
         }
         defaults.set(defaultWorkspaceID, forKey: Self.defaultWorkspaceIDKey)
-
         if preserveLegacyRoot {
+            defaults.synchronize()
             return
         }
         if let defaultWorkspace = workspaces.first(where: { $0.id == defaultWorkspaceID }) ?? workspaces.first {
@@ -245,6 +312,7 @@ public final class WorkspaceStore {
         } else {
             defaults.removeObject(forKey: Self.legacyTeamRootKey)
         }
+        defaults.synchronize()
     }
 
     private func uniqueID(base: String, excluding existing: Set<String>) -> String {
@@ -255,6 +323,41 @@ public final class WorkspaceStore {
             index += 1
         }
         return candidate
+    }
+
+    private static func workspaceCount(in json: String?) -> Int {
+        guard let json, let data = json.data(using: .utf8) else { return 0 }
+        guard let decoded = try? JSONDecoder().decode([Workspace].self, from: data) else { return 0 }
+        return normalizedWorkspaces(decoded).count
+    }
+
+    private static func normalizeStoredWorkspaces(in defaults: UserDefaults) {
+        guard let json = defaults.string(forKey: workspacesKey),
+              let normalized = normalizedWorkspaceJSON(from: json),
+              normalized != json else { return }
+        defaults.set(normalized, forKey: workspacesKey)
+        defaults.synchronize()
+    }
+
+    private static func normalizedWorkspaceJSON(from json: String) -> String? {
+        guard let data = json.data(using: .utf8),
+              let decoded = try? JSONDecoder().decode([Workspace].self, from: data),
+              let normalizedData = try? JSONEncoder().encode(normalizedWorkspaces(decoded)) else {
+            return nil
+        }
+        return String(data: normalizedData, encoding: .utf8)
+    }
+
+    private static func normalizedWorkspaces(_ workspaces: [Workspace]) -> [Workspace] {
+        var normalized: [Workspace] = []
+        for workspace in workspaces.sorted(by: { $0.rootPath.count < $1.rootPath.count }) {
+            guard normalized.first(where: { workspace.rootPath == $0.rootPath || workspace.rootPath.hasPrefix($0.rootPath + "/") }) == nil else {
+                continue
+            }
+            normalized.removeAll { $0.rootPath.hasPrefix(workspace.rootPath + "/") }
+            normalized.append(workspace)
+        }
+        return normalized
     }
 }
 

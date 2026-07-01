@@ -2,7 +2,7 @@ import Foundation
 import DropboxOpenCore
 
 enum Config {
-    static let store = WorkspaceStore(defaults: WorkspaceStore.sharedDefaults())
+    static let store = WorkspaceStore.sharedStore()
 
     static var teamRoot: URL? {
         get {
