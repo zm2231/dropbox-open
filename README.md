@@ -28,6 +28,17 @@ The default notarization profile is `dropbox-open-notary`; override it with
 `NOTARY_PROFILE=...`. For local packaging checks that should skip Apple's notary
 service, run `NOTARIZE=0 ./Scripts/build-app.sh`.
 
+Before the first release build on a new machine, create the Keychain profile:
+
+```
+xcrun notarytool store-credentials dropbox-open-notary \
+  --apple-id you@example.com \
+  --team-id Q5Y75DVV4M
+```
+
+`notarytool` will securely prompt for an app-specific password and validate the
+profile before saving it.
+
 ## Install (once released)
 
 ```
