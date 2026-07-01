@@ -32,7 +32,7 @@ final class FinderSync: FIFinderSync {
     }
 
     override var toolbarItemImage: NSImage {
-        Self.boxIcon(accessibilityDescription: "Dropbox Deeplink")
+        BoxIcon.make(accessibilityDescription: "Dropbox Deeplink")
     }
 
     override func menu(for menuKind: FIMenuKind) -> NSMenu? {
@@ -48,7 +48,7 @@ final class FinderSync: FIFinderSync {
             keyEquivalent: ""
         )
         item.target = self
-        item.image = Self.boxIcon(accessibilityDescription: nil)
+        item.image = BoxIcon.make(accessibilityDescription: nil)
         item.representedObject = supported
         menu.addItem(item)
         return menu
@@ -90,12 +90,4 @@ final class FinderSync: FIFinderSync {
         }
     }
 
-    private static func boxIcon(accessibilityDescription: String?) -> NSImage {
-        let image = NSImage(systemSymbolName: IconNames.box, accessibilityDescription: accessibilityDescription)
-            ?? NSImage(systemSymbolName: "shippingbox", accessibilityDescription: accessibilityDescription)
-            ?? NSImage()
-        image.size = NSSize(width: 18, height: 18)
-        image.isTemplate = true
-        return image
-    }
 }

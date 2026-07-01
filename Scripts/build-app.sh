@@ -22,6 +22,22 @@ else
   CODESIGN_TIMESTAMP=(--timestamp)
 fi
 
+assert_distribution_signature() {
+  local bundle="$1"
+  local details
+  details="$(codesign -dvvv "$bundle" 2>&1)"
+  if ! grep -q "Authority=$SIGN_IDENTITY" <<<"$details"; then
+    echo "error: $bundle is not signed with the expected certificate: $SIGN_IDENTITY" >&2
+    echo "$details" >&2
+    exit 1
+  fi
+  if ! grep -q "TeamIdentifier=Q5Y75DVV4M" <<<"$details"; then
+    echo "error: $bundle is missing the expected Developer ID team identifier" >&2
+    echo "$details" >&2
+    exit 1
+  fi
+}
+
 echo "==> swift build -c release"
 cd "$ROOT"
 swift build -c release
@@ -42,7 +58,7 @@ xcrun swiftc \
   -sdk "$MACOS_SDK" \
   -framework Cocoa \
   -framework FinderSync \
-  "$ROOT/Sources/DropboxOpenCore/IconNames.swift" \
+  "$ROOT/Sources/DropboxOpenCore/BoxIcon.swift" \
   "$ROOT/Sources/DropboxOpenCore/WorkspaceStore.swift" \
   "$ROOT/Sources/DropboxOpenFinderSync/FinderSync.swift" \
   "$ROOT/Sources/DropboxOpenFinderSync/main.swift" \
@@ -61,6 +77,10 @@ codesign --force --options runtime "${CODESIGN_TIMESTAMP[@]}" \
   "$APP_BUNDLE"
 
 codesign --verify --deep --strict --verbose=2 "$APP_BUNDLE"
+if [ "$SIGN_IDENTITY" != "-" ]; then
+  assert_distribution_signature "$FINDER_SYNC_BUNDLE"
+  assert_distribution_signature "$APP_BUNDLE"
+fi
 
 if [ "$NOTARIZE" = "1" ]; then
   echo "==> notarizing (profile: $NOTARY_PROFILE)"
