@@ -94,6 +94,7 @@ final class FinderSync: FIFinderSync {
         let image = NSImage(systemSymbolName: IconNames.box, accessibilityDescription: accessibilityDescription)
             ?? NSImage(systemSymbolName: "shippingbox", accessibilityDescription: accessibilityDescription)
             ?? NSImage()
+        image.size = NSSize(width: 18, height: 18)
         image.isTemplate = true
         return image
     }

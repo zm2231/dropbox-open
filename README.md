@@ -47,15 +47,15 @@ brew install --cask dropbox-open
 ```
 
 Installs the app into `/Applications`. The Finder Sync extension is embedded in the
-app bundle; macOS may ask you to enable it in System Settings the first time. The
-app also registers as a login item on launch so `dbxopen://` links keep working
-after logout or reboot; macOS may ask you to allow this background item.
+app bundle; macOS may ask you to enable it in System Settings the first time.
 
 ## Use
 
 1. Click the menu-bar icon, "Add Dropbox Workspace...", pick your local synced copy
    of a shared Dropbox folder. The app assigns a workspace id from the folder name
    (for example `Quoxient` becomes `quoxient`).
+   Adding a subfolder of an already configured workspace keeps the existing parent
+   workspace; files in that subfolder still work as normal relative paths.
 2. Click any `dbxopen://...` link (Slack, wiki, wherever). Finder reveals the file.
 3. Or: right-click any file in a configured workspace in Finder, "Copy Dropbox
    Deeplink". If more than one workspace matches, the deepest/longest workspace root
