@@ -6,9 +6,20 @@ let package = Package(
     name: "DropboxOpen",
     platforms: [.macOS(.v13)],
     targets: [
+        .target(
+            name: "DropboxOpenCore",
+            path: "Sources/DropboxOpenCore"
+        ),
         .executableTarget(
             name: "DropboxOpen",
-            path: "Sources/DropboxOpen"
+            dependencies: ["DropboxOpenCore"],
+            path: "Sources/DropboxOpen",
+            exclude: ["Resources"]
+        ),
+        .testTarget(
+            name: "DropboxOpenCoreTests",
+            dependencies: ["DropboxOpenCore"],
+            path: "Tests/DropboxOpenCoreTests"
         )
     ]
 )

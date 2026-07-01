@@ -1,15 +1,31 @@
 import Foundation
+import DropboxOpenCore
 
 enum Config {
-    private static let key = "teamRootPath"
+    static let store = WorkspaceStore()
 
     static var teamRoot: URL? {
         get {
-            guard let path = UserDefaults.standard.string(forKey: key) else { return nil }
-            return URL(fileURLWithPath: path, isDirectory: true)
+            store.defaultWorkspace?.rootURL
         }
         set {
-            UserDefaults.standard.set(newValue?.path, forKey: key)
+            guard let newValue else {
+                store.clearWorkspaces()
+                return
+            }
+            _ = store.addWorkspace(rootURL: newValue)
         }
+    }
+
+    static var workspaces: [Workspace] {
+        store.workspaces
+    }
+
+    static func addWorkspace(rootURL: URL) -> Workspace {
+        store.addWorkspace(rootURL: rootURL)
+    }
+
+    static func clearWorkspaces() {
+        store.clearWorkspaces()
     }
 }
