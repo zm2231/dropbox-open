@@ -18,7 +18,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func buildStatusItem() {
         if statusItem == nil {
             statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-            statusItem?.button?.image = NSImage(systemSymbolName: "shippingbox", accessibilityDescription: "Dropbox Deeplink")
+            statusItem?.button?.image = BoxIcon.make(accessibilityDescription: "Dropbox Deeplink")
         }
 
         let menu = NSMenu()
@@ -137,4 +137,5 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         alert.informativeText = message
         alert.runModal()
     }
+
 }
