@@ -48,7 +48,7 @@ final class FinderSync: FIFinderSync {
             keyEquivalent: ""
         )
         item.target = self
-        item.image = BoxIcon.make(accessibilityDescription: nil)
+        item.image = BoxIcon.makeForCurrentAppearance(accessibilityDescription: nil)
         item.representedObject = supported
         menu.addItem(item)
         return menu

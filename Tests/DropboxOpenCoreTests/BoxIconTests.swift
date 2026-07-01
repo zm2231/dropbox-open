@@ -12,4 +12,12 @@ struct BoxIconTests {
         #expect(icon.size == NSSize(width: 18, height: 18))
         #expect(icon.accessibilityDescription == "Dropbox Deeplink")
     }
+
+    @Test("creates explicitly tinted icon for Finder menus")
+    func createsTintedIcon() {
+        let icon = BoxIcon.make(accessibilityDescription: nil, tint: .white)
+
+        #expect(!icon.isTemplate)
+        #expect(icon.size == NSSize(width: 18, height: 18))
+    }
 }

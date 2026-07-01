@@ -2,9 +2,17 @@ import AppKit
 
 public enum BoxIcon {
     public static func make(accessibilityDescription: String?) -> NSImage {
+        make(accessibilityDescription: accessibilityDescription, tint: nil)
+    }
+
+    public static func makeForCurrentAppearance(accessibilityDescription: String?) -> NSImage {
+        make(accessibilityDescription: accessibilityDescription, tint: isDarkAppearance() ? .white : .black)
+    }
+
+    public static func make(accessibilityDescription: String?, tint: NSColor?) -> NSImage {
         let size = NSSize(width: 18, height: 18)
         let image = NSImage(size: size, flipped: false) { rect in
-            NSColor.black.setFill()
+            (tint ?? .black).setFill()
 
             let body = NSBezierPath(roundedRect: NSRect(x: 3.0, y: 3.0, width: 12.0, height: 10.0), xRadius: 1.8, yRadius: 1.8)
             body.fill()
@@ -22,7 +30,14 @@ public enum BoxIcon {
             return true
         }
         image.accessibilityDescription = accessibilityDescription
-        image.isTemplate = true
+        image.isTemplate = tint == nil
         return image
+    }
+
+    private static func isDarkAppearance() -> Bool {
+        if NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua {
+            return true
+        }
+        return UserDefaults.standard.string(forKey: "AppleInterfaceStyle") == "Dark"
     }
 }
