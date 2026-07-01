@@ -22,7 +22,7 @@ cask "dropbox-open" do
                     args: ["-a", "#{appdir}/Dropbox Deeplink.app/Contents/PlugIns/DropboxOpenFinderSync.appex"],
                     sudo: false
     system_command "/usr/bin/pluginkit",
-                    args: ["-e", "use", "-i", "com.quoxient.dropbox-open.findersync"],
+                    args: ["-e", "use", "-i", "com.merchantry.dropbox-open.findersync"],
                     sudo: false
     system_command "/usr/bin/killall",
                     args: ["Finder"],
@@ -30,7 +30,7 @@ cask "dropbox-open" do
   end
 
   zap trash: [
-    "~/Library/Preferences/com.quoxient.dropbox-open.plist",
+    "~/Library/Preferences/com.merchantry.dropbox-open.plist",
     "~/Library/Services/Copy Dropbox Deeplink.workflow",
   ]
 end

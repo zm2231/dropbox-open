@@ -7,7 +7,7 @@
 	<key>CFBundleDisplayName</key>
 	<string>Dropbox Deeplink</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.quoxient.dropbox-open</string>
+	<string>com.merchantry.dropbox-open</string>
 	<key>CFBundleVersion</key>
 	<string>2</string>
 	<key>CFBundleShortVersionString</key>
@@ -26,7 +26,7 @@
 	<array>
 		<dict>
 			<key>CFBundleURLName</key>
-			<string>com.quoxient.dropbox-open.scheme</string>
+			<string>com.merchantry.dropbox-open.scheme</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>dbxopen</string>

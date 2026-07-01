@@ -7,7 +7,7 @@
 	<key>CFBundleExecutable</key>
 	<string>DropboxOpenFinderSync</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.quoxient.dropbox-open.findersync</string>
+	<string>com.merchantry.dropbox-open.findersync</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>

@@ -69,9 +69,9 @@ public enum DropboxLinkError: LocalizedError, Equatable {
 }
 
 public final class WorkspaceStore {
-    public static let appSuiteName = "com.quoxient.dropbox-open"
-    public static let appGroupSuiteName = "group.com.quoxient.dropbox-open"
-    public static let workspacesDidChangeNotification = Notification.Name("com.quoxient.dropbox-open.workspacesChanged")
+    public static let appSuiteName = "com.merchantry.dropbox-open"
+    public static let appGroupSuiteName = "group.com.merchantry.dropbox-open"
+    public static let workspacesDidChangeNotification = Notification.Name("com.merchantry.dropbox-open.workspacesChanged")
     public static let workspacesKey = "workspacesJSON"
     public static let defaultWorkspaceIDKey = "defaultWorkspaceID"
     public static let legacyTeamRootKey = "teamRootPath"
